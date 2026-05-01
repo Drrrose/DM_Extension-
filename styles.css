@@ -1,13 +1,14 @@
-/* Core dark mode filter: invert all colors, then rotate hue 180deg to restore original hues. 
-   We add a slight brightness/contrast adjustment to achieve a dark gray instead of harsh black. */
+/* Core dark mode filter: 
+   invert(84.3%) maps pure white (#FFFFFF) directly to #282828 (extremely close to #28282B).
+   hue-rotate(180deg) restores the original colors. */
 html {
-  /* The exact combination of filters to achieve a pleasant dark gray */
-  filter: invert(100%) hue-rotate(180deg) brightness(105%) contrast(85%) !important;
-  /* Ensuring the base is solid if transparent so inversion always works predictably */
+  filter: invert(84.3%) hue-rotate(180deg) !important;
   background-color: #fff; 
 }
 
-/* Reverse the filter on media elements so they render correctly and don't look like negatives */
+/* Reverse the filter on media elements so they render correctly.
+   Because we inverted by 84.3%, the dynamic range is compressed.
+   contrast(145%) mathematically restores the original contrast levels to the media. */
 img, 
 video, 
 svg, 
@@ -15,7 +16,7 @@ canvas,
 iframe, 
 embed, 
 object {
-  filter: invert(100%) hue-rotate(180deg) !important;
+  filter: invert(100%) hue-rotate(180deg) contrast(145%) !important;
 }
 
 /* Specific fix for images that might be double-inverted (e.g., inside an already inverted container) */

@@ -1,10 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Lag-Free Dark Mode",
-  "version": "1.0",
+  "version": "1.1",
   "description": "A minimalist, zero-lag dark mode extension.",
   "permissions": [
-    "storage"
+    "storage",
+    "scripting"
   ],
   "host_permissions": [
     "<all_urls>"
