@@ -13,16 +13,17 @@ html {
 }
 
 /* Reverse the filter on media elements and background images so they render correctly.
-   The contrast adjustment is mathematically calculated to restore the original contrast. */
-img, 
+   The contrast adjustment is mathematically calculated to restore the original contrast.
+   We exclude elements with the .dm-no-revert class (monochrome icons/logos that should turn white). */
+img:not(.dm-no-revert), 
 video, 
-svg, 
+svg:not(.dm-no-revert), 
 canvas, 
 iframe, 
 embed, 
 object,
-[style*="background-image"],
-.dm-preserve-bg {
+[style*="background-image"]:not(.dm-no-revert),
+.dm-preserve-bg:not(.dm-no-revert) {
   filter: invert(100%) hue-rotate(180deg) contrast(var(--dm-media-contrast, 145%)) !important;
 }
 
