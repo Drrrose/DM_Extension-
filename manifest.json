@@ -1,17 +1,19 @@
 {
   "manifest_version": 3,
   "name": "Lag-Free Dark Mode",
-  "version": "1.1",
-  "description": "A minimalist, zero-lag dark mode extension.",
+  "version": "1.2",
+  "description": "A premium, lag-free dark mode extension with complete design control and auto-scheduling.",
   "permissions": [
     "storage",
-    "scripting"
+    "scripting",
+    "activeTab"
   ],
   "host_permissions": [
     "<all_urls>"
   ],
   "action": {
-    "default_title": "Toggle Dark Mode",
+    "default_title": "Lag-Free Dark Mode Control Center",
+    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",

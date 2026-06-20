@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lag-Free Dark Mode</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0c0c0e;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --card-border: rgba(255, 255, 255, 0.07);
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --accent-color: #6366f1;
+      --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      --accent-glow: rgba(99, 102, 241, 0.15);
+      --accent-glow-strong: rgba(99, 102, 241, 0.4);
+      --danger-color: #f87171;
+      --danger-bg-hover: rgba(248, 113, 113, 0.1);
+      --border-radius-lg: 16px;
+      --border-radius-md: 10px;
+      --border-radius-sm: 6px;
+      --transition-standard: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 350px;
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      padding: 18px;
+      overflow-x: hidden;
+      font-size: 14px;
+      letter-spacing: -0.01em;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Glassmorphism Card Container */
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--border-radius-lg);
+      padding: 16px;
+      margin-bottom: 14px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Flex Layouts */
+    .flex-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Title Header styling */
+    header {
+      margin-bottom: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-glow {
+      position: relative;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px var(--accent-color);
+    }
+
+    .brand h1 {
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(120deg, #ffffff 40%, var(--text-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Master Switch Toggle */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 26px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: var(--transition-standard);
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #fff;
+      transition: var(--transition-standard);
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    input:checked + .slider {
+      background: var(--accent-gradient);
+      box-shadow: 0 0 15px var(--accent-glow-strong);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+
+    /* Current site status styling */
+    .site-card {
+      background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(99, 102, 241, 0.03) 100%);
+      border: 1px solid var(--card-border);
+    }
+
+    .domain-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .domain-info svg {
+      color: var(--text-secondary);
+    }
+
+    .domain-name {
+      font-weight: 500;
+      color: var(--text-primary);
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .domain-status {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+
+    .sub-toggle-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    /* Mode Segmented Controls */
+    .mode-selector {
+      display: flex;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 3px;
+      border-radius: var(--border-radius-md);
+      margin-bottom: 14px;
+      position: relative;
+    }
+
+    .mode-option {
+      flex: 1;
+      text-align: center;
+      padding: 8px 0;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: var(--border-radius-sm);
+      transition: var(--transition-standard);
+      position: relative;
+      z-index: 1;
+    }
+
+    .mode-option.active {
+      color: #fff;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Schedule Panel styling */
+    .schedule-panel {
+      display: none;
+      gap: 10px;
+      margin-bottom: 14px;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .schedule-panel.visible {
+      display: flex;
+    }
+
+    .time-input-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .time-input-group label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .time-input-group input[type="time"] {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      border-radius: var(--border-radius-md);
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      transition: var(--transition-standard);
+      width: 100%;
+    }
+
+    .time-input-group input[type="time"]:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    /* Adjustments Panel (Sliders) */
+    .section-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .slider-group {
+      margin-bottom: 14px;
+    }
+
+    .slider-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .slider-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .slider-label svg {
+      color: var(--text-secondary);
+    }
+
+    .slider-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .slider-val {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-color);
+      min-width: 32px;
+      text-align: right;
+    }
+
+    .btn-reset {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: var(--transition-standard);
+    }
+
+    .btn-reset:hover {
+      color: var(--text-secondary);
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Custom range input styling */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+      transition: var(--transition-standard);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--text-primary);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      transition: var(--transition-standard);
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      background: #fff;
+      transform: scale(1.15);
+      box-shadow: 0 0 8px var(--accent-color);
+    }
+
+    input[type="range"]:focus::-webkit-slider-thumb {
+      background: #fff;
+    }
+
+    /* Exceptions Manager */
+    .exclusions-panel {
+      max-height: 140px;
+      overflow-y: auto;
+      margin-top: 6px;
+    }
+
+    .exclusions-empty {
+      color: var(--text-muted);
+      font-size: 12px;
+      text-align: center;
+      padding: 12px 0;
+      font-style: italic;
+    }
+
+    .exclusion-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: var(--border-radius-md);
+      margin-bottom: 6px;
+      font-size: 12px;
+      animation: slideIn 0.2s ease-out;
+    }
+
+    .exclusion-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .exclusion-host {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 240px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .btn-delete {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition-standard);
+    }
+
+    .btn-delete:hover {
+      color: var(--danger-color);
+      background-color: var(--danger-bg-hover);
+    }
+
+    /* Preset Theme Buttons */
+    .preset-selector {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .preset-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: var(--border-radius-md);
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition-standard);
+      text-align: center;
+    }
+
+    .preset-btn:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .preset-btn.active {
+      color: #fff;
+      background: var(--accent-gradient);
+      border-color: transparent;
+      box-shadow: 0 2px 10px var(--accent-glow);
+    }
+
+    /* Footer styling */
+    footer {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 10px;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(6px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- Header with Master Toggle -->
+  <header class="flex-between">
+    <div class="brand">
+      <div class="logo-glow">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="color: white;">
+          <path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278z"/>
+        </svg>
+      </div>
+      <h1>Lag-Free Dark Mode</h1>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="master-toggle" checked>
+      <span class="slider"></span>
+    </label>
+  </header>
+
+  <!-- Active Site Card Exemption -->
+  <div class="card site-card flex-between" id="active-site-box">
+    <div class="domain-info">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="2" y1="12" x2="22" y2="12"></line>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+      </svg>
+      <div>
+        <div class="domain-name" id="current-domain">Detecting site...</div>
+        <div class="domain-status" id="current-status">Checking settings</div>
+      </div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="site-toggle" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <!-- Mode Segmented Tab Switcher -->
+  <div class="mode-selector">
+    <div class="mode-option active" data-mode="manual">Manual</div>
+    <div class="mode-option" data-mode="auto">System</div>
+    <div class="mode-option" data-mode="schedule">Schedule</div>
+  </div>
+
+  <!-- Time Schedule Inputs Panel -->
+  <div class="card schedule-panel" id="schedule-panel">
+    <div class="time-input-group">
+      <label>
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        Start (Sunset)
+      </label>
+      <input type="time" id="time-start" value="20:00">
+    </div>
+    <div class="time-input-group">
+      <label>
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        End (Sunrise)
+      </label>
+      <input type="time" id="time-end" value="07:00">
+    </div>
+  </div>
+
+  <!-- Theme Presets Card -->
+  <div class="card">
+    <div class="section-title">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+        <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>
+      </svg>
+      Theme Presets
+    </div>
+    <div class="preset-selector">
+      <button class="preset-btn" id="preset-soft">Comfort Gray</button>
+      <button class="preset-btn" id="preset-pitch">Pitch Black</button>
+    </div>
+  </div>
+
+  <!-- Adjustments Sliders Section -->
+  <div class="card">
+    <div class="section-title">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <path d="M12 20v-8M12 8V4M4 20v-6M4 10V4M20 20v-4M20 12V4M1 14h6M9 8h6M17 12h6"></path>
+      </svg>
+      Custom Adjustments
+    </div>
+
+    <!-- Invert slider -->
+    <div class="slider-group">
+      <div class="slider-header">
+        <div class="slider-label">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 2a10 10 0 0 0-10 10h10v10"></path>
+          </svg>
+          Invert Level
+        </div>
+        <div class="slider-actions">
+          <span class="slider-val" id="val-invert">84%</span>
+          <button class="btn-reset" id="reset-invert" title="Reset to default">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <input type="range" id="range-invert" min="50" max="100" step="0.5" value="84.3">
+    </div>
+
+    <!-- Brightness slider -->
+    <div class="slider-group">
+      <div class="slider-header">
+        <div class="slider-label">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          Brightness
+        </div>
+        <div class="slider-actions">
+          <span class="slider-val" id="val-brightness">105%</span>
+          <button class="btn-reset" id="reset-brightness" title="Reset to default">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <input type="range" id="range-brightness" min="50" max="150" step="1" value="105">
+    </div>
+
+    <!-- Contrast slider -->
+    <div class="slider-group">
+      <div class="slider-header">
+        <div class="slider-label">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 2a10 10 0 0 1 0 20z"></path>
+          </svg>
+          Contrast
+        </div>
+        <div class="slider-actions">
+          <span class="slider-val" id="val-contrast">85%</span>
+          <button class="btn-reset" id="reset-contrast" title="Reset to default">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <input type="range" id="range-contrast" min="50" max="150" step="1" value="85">
+    </div>
+
+    <!-- Grayscale slider -->
+    <div class="slider-group">
+      <div class="slider-header">
+        <div class="slider-label">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+            <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>
+          </svg>
+          Grayscale
+        </div>
+        <div class="slider-actions">
+          <span class="slider-val" id="val-grayscale">0%</span>
+          <button class="btn-reset" id="reset-grayscale" title="Reset to default">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <input type="range" id="range-grayscale" min="0" max="100" step="1" value="0">
+    </div>
+  </div>
+
+  <!-- Excluded Sites Panel -->
+  <div class="card">
+    <div class="section-title">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="9" y1="9" x2="15" y2="15"></line>
+        <line x1="15" y1="9" x2="9" y2="15"></line>
+      </svg>
+      Excluded Websites
+    </div>
+    <div class="exclusions-panel" id="exclusions-list">
+      <!-- Excluded sites will be dynamically injected here -->
+      <div class="exclusions-empty">No excluded websites</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    Lag-Free Dark Mode &bull; v1.2
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

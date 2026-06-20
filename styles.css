@@ -1,27 +1,38 @@
-/* Core dark mode filter: 
-   invert(84.3%) maps pure white (#FFFFFF) directly to #282828 (extremely close to #28282B).
-   hue-rotate(180deg) restores the original colors. */
+/* Lag-Free Dark Mode - Premium Dynamic Stylesheet */
 html {
-  filter: invert(84.3%) hue-rotate(180deg) !important;
-  background-color: #fff; 
+  /* Default variables (fallback values) */
+  --dm-invert: 84.3%;
+  --dm-hue: 180deg;
+  --dm-brightness: 105%;
+  --dm-contrast: 85%;
+  --dm-grayscale: 0%;
+  --dm-media-contrast: 145%;
+
+  filter: invert(var(--dm-invert)) hue-rotate(var(--dm-hue)) brightness(var(--dm-brightness)) contrast(var(--dm-contrast)) grayscale(var(--dm-grayscale)) !important;
+  background-color: #fff !important; 
 }
 
-/* Reverse the filter on media elements so they render correctly.
-   Because we inverted by 84.3%, the dynamic range is compressed.
-   contrast(145%) mathematically restores the original contrast levels to the media. */
+/* Reverse the filter on media elements and background images so they render correctly.
+   The contrast adjustment is mathematically calculated to restore the original contrast. */
 img, 
 video, 
 svg, 
 canvas, 
 iframe, 
 embed, 
-object {
-  filter: invert(100%) hue-rotate(180deg) contrast(145%) !important;
+object,
+[style*="background-image"],
+.dm-preserve-bg {
+  filter: invert(100%) hue-rotate(180deg) contrast(var(--dm-media-contrast, 145%)) !important;
 }
 
 /* Specific fix for images that might be double-inverted (e.g., inside an already inverted container) */
+img img,
 img video,
 video img,
-svg img {
+svg img,
+.dm-preserve-bg img,
+.dm-preserve-bg svg {
   filter: none !important;
 }
+
